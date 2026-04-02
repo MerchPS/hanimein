@@ -1,0 +1,565 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AniNexus - Streaming Anime Terlengkap</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/hls.js@1"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: #0a0c12;
+            color: #eef2ff;
+        }
+
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #1e1f2c;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #ff5e7c;
+            border-radius: 8px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 0 24px;
+        }
+
+        .navbar {
+            background: rgba(10, 12, 18, 0.95);
+            backdrop-filter: blur(16px);
+            border-bottom: 1px solid rgba(255, 94, 124, 0.2);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            padding: 14px 0;
+        }
+
+        .nav-flex {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 16px;
+        }
+
+        .logo {
+            font-size: 1.7rem;
+            font-weight: 800;
+            background: linear-gradient(135deg, #FF5E7C, #FFB347);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+        }
+
+        .logo i {
+            background: none;
+            color: #FF5E7C;
+            margin-right: 6px;
+        }
+
+        .search-box {
+            display: flex;
+            background: #1e1f2c;
+            border-radius: 60px;
+            padding: 6px 16px;
+            align-items: center;
+            gap: 12px;
+            flex: 1;
+            max-width: 460px;
+            border: 1px solid #2d2f3e;
+        }
+
+        .search-box:focus-within {
+            border-color: #FF5E7C;
+        }
+
+        .search-box input {
+            background: transparent;
+            border: none;
+            padding: 10px 0;
+            color: white;
+            width: 100%;
+            outline: none;
+        }
+
+        .search-box button {
+            background: none;
+            border: none;
+            color: #ffb347;
+            cursor: pointer;
+            font-size: 1.2rem;
+        }
+
+        .source-badge {
+            display: flex;
+            gap: 12px;
+        }
+
+        .source-btn {
+            background: #181b26;
+            border: none;
+            padding: 8px 18px;
+            border-radius: 36px;
+            font-weight: 600;
+            font-size: 0.8rem;
+            cursor: pointer;
+            color: #ccd6f0;
+            transition: 0.2s;
+        }
+
+        .source-btn.active {
+            background: #FF5E7C;
+            color: white;
+        }
+
+        .anime-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+            gap: 28px;
+            margin: 40px 0;
+        }
+
+        .anime-card {
+            background: #13151f;
+            border-radius: 24px;
+            overflow: hidden;
+            cursor: pointer;
+            transition: transform 0.25s ease;
+            border: 1px solid #262838;
+        }
+
+        .anime-card:hover {
+            transform: translateY(-6px);
+            border-color: #FF5E7C;
+        }
+
+        .card-img {
+            aspect-ratio: 2 / 2.8;
+            overflow: hidden;
+        }
+
+        .card-img img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .card-info {
+            padding: 14px 12px;
+        }
+
+        .card-title {
+            font-weight: 700;
+            font-size: 0.95rem;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+
+        .loader {
+            text-align: center;
+            padding: 60px;
+            font-size: 1.2rem;
+            color: #FFB347;
+        }
+
+        .section-title {
+            font-size: 1.8rem;
+            font-weight: 700;
+            margin: 32px 0 12px 0;
+            border-left: 5px solid #FF5E7C;
+            padding-left: 20px;
+        }
+
+        .episode-panel {
+            background: #10121c;
+            border-radius: 32px;
+            padding: 28px;
+            margin: 20px 0;
+            border: 1px solid #292e42;
+        }
+
+        .anime-header {
+            display: flex;
+            gap: 28px;
+            flex-wrap: wrap;
+            margin-bottom: 28px;
+        }
+
+        .anime-poster {
+            width: 180px;
+            border-radius: 20px;
+            overflow: hidden;
+        }
+
+        .anime-poster img {
+            width: 100%;
+        }
+
+        .anime-info-det {
+            flex: 1;
+        }
+
+        .episode-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            margin: 24px 0;
+            max-height: 340px;
+            overflow-y: auto;
+            padding: 6px 4px;
+        }
+
+        .episode-btn {
+            background: #1e2130;
+            border: none;
+            padding: 10px 18px;
+            border-radius: 40px;
+            font-weight: 600;
+            color: #eef2ff;
+            cursor: pointer;
+            transition: 0.1s;
+        }
+
+        .episode-btn:hover, .episode-btn.active-ep {
+            background: #FF5E7C;
+            color: white;
+        }
+
+        .video-container {
+            margin-top: 20px;
+            border-radius: 28px;
+            overflow: hidden;
+            background: black;
+        }
+
+        video {
+            width: 100%;
+            max-height: 500px;
+            outline: none;
+        }
+
+        .back-btn {
+            background: none;
+            border: 1px solid #ff5e7c;
+            padding: 8px 20px;
+            border-radius: 40px;
+            color: #ff5e7c;
+            font-weight: 600;
+            cursor: pointer;
+            margin-bottom: 16px;
+        }
+
+        footer {
+            text-align: center;
+            padding: 32px;
+            color: #6c7293;
+            border-top: 1px solid #1e2130;
+            margin-top: 40px;
+        }
+
+        .notice {
+            background: #FF5E7C20;
+            border-radius: 20px;
+            padding: 12px;
+            text-align: center;
+        }
+
+        .pagination {
+            display: flex;
+            justify-content: center;
+            gap: 16px;
+            margin: 24px 0;
+        }
+
+        @media (max-width: 720px) {
+            .container {
+                padding: 0 16px;
+            }
+            .anime-grid {
+                gap: 16px;
+                grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            }
+        }
+    </style>
+</head>
+<body>
+<div class="navbar">
+    <div class="container nav-flex">
+        <div class="logo">
+            <i class="fas fa-film"></i> AniNexus
+        </div>
+        <div class="search-box">
+            <input type="text" id="searchInput" placeholder="Cari anime...">
+            <button id="searchBtn"><i class="fas fa-search"></i></button>
+        </div>
+        <div class="source-badge">
+            <button class="source-btn active" data-source="kurama">⚡ Kurama</button>
+            <button class="source-btn" data-source="mobinime">🎬 Mobinime</button>
+            <button class="source-btn" data-source="animein">🍥 Animein</button>
+        </div>
+    </div>
+</div>
+
+<div class="container" id="appContainer">
+    <div id="homeView">
+        <div class="section-title"><i class="fas fa-fire"></i> Ongoing Anime</div>
+        <div id="animeGrid" class="anime-grid"></div>
+        <div id="pagination" class="pagination"></div>
+    </div>
+    <div id="detailView" style="display: none;">
+        <button class="back-btn" id="backHomeBtn"><i class="fas fa-arrow-left"></i> Kembali</button>
+        <div id="detailContent"></div>
+    </div>
+</div>
+<footer>AniNexus - Streaming Anime Tanpa Batas</footer>
+
+<script>
+    const API_BASE = '';
+    let activeSource = 'kurama';
+    let currentPage = 1;
+    let currentDetail = null;
+    let currentEpisodes = [];
+
+    async function apiCall(endpoint, params = {}) {
+        const url = new URL(`${API_BASE}/api/${activeSource}${endpoint}`, window.location.origin);
+        Object.keys(params).forEach(key => url.searchParams.append(key, params[key]));
+        const response = await fetch(url);
+        if (!response.ok) throw new Error(`API Error: ${response.status}`);
+        return response.json();
+    }
+
+    async function loadAnimes(page = 1) {
+        const grid = document.getElementById('animeGrid');
+        grid.innerHTML = '<div class="loader"><i class="fas fa-spinner fa-pulse"></i> Memuat...</div>';
+        
+        try {
+            const data = await apiCall('/ongoing', { page });
+            renderAnimeGrid(data.animes);
+            renderPagination(data.hasNextPage, data.nextPage, page);
+        } catch (error) {
+            grid.innerHTML = `<div class="notice">Error: ${error.message}</div>`;
+        }
+    }
+
+    async function searchAnimes(query, page = 1) {
+        const grid = document.getElementById('animeGrid');
+        grid.innerHTML = '<div class="loader"><i class="fas fa-spinner fa-pulse"></i> Mencari...</div>';
+        
+        try {
+            const data = await apiCall('/search', { q: query, page });
+            renderAnimeGrid(data.animes);
+            renderPagination(data.hasNextPage, data.nextPage, page);
+        } catch (error) {
+            grid.innerHTML = `<div class="notice">Error: ${error.message}</div>`;
+        }
+    }
+
+    function renderAnimeGrid(animes) {
+        const grid = document.getElementById('animeGrid');
+        if (!animes || animes.length === 0) {
+            grid.innerHTML = '<div class="notice">Tidak ada anime ditemukan</div>';
+            return;
+        }
+
+        grid.innerHTML = animes.map(anime => `
+            <div class="anime-card" data-id="${anime.id}" data-url="${anime.url || ''}">
+                <div class="card-img">
+                    <img src="${anime.poster || 'https://via.placeholder.com/200x280?text=No+Image'}" 
+                         onerror="this.src='https://via.placeholder.com/200x280?text=Error'">
+                </div>
+                <div class="card-info">
+                    <div class="card-title">${escapeHtml(anime.title)}</div>
+                </div>
+            </div>
+        `).join('');
+
+        document.querySelectorAll('.anime-card').forEach(card => {
+            card.addEventListener('click', () => showDetail(card.dataset.id, card.dataset.url));
+        });
+    }
+
+    async function showDetail(id, url) {
+        document.getElementById('homeView').style.display = 'none';
+        document.getElementById('detailView').style.display = 'block';
+        const detailDiv = document.getElementById('detailContent');
+        detailDiv.innerHTML = '<div class="loader">Mengambil detail...</div>';
+
+        try {
+            let params = {};
+            if (activeSource === 'kurama') params = { url };
+            else params = { id };
+            
+            const detail = await apiCall('/detail', params);
+            currentEpisodes = detail.episodes || [];
+            renderDetail(detail);
+        } catch (error) {
+            detailDiv.innerHTML = `<div class="notice">Error: ${error.message}</div>`;
+        }
+    }
+
+    function renderDetail(detail) {
+        const container = document.getElementById('detailContent');
+        container.innerHTML = `
+            <div class="episode-panel">
+                <div class="anime-header">
+                    <div class="anime-poster">
+                        <img src="${detail.poster || 'https://via.placeholder.com/200x280'}" onerror="this.src='https://via.placeholder.com/200x280'">
+                    </div>
+                    <div class="anime-info-det">
+                        <h2>${escapeHtml(detail.title)}</h2>
+                        <p style="margin-top: 12px;">${escapeHtml(detail.sinopsis?.substring(0, 500) || 'Sinopsis tidak tersedia')}</p>
+                    </div>
+                </div>
+                <h3><i class="fas fa-list"></i> Daftar Episode</h3>
+                <div id="episodeList" class="episode-list"></div>
+                <div id="videoArea">
+                    <div class="video-container">
+                        <video id="animeVideo" controls style="width:100%"></video>
+                    </div>
+                </div>
+            </div>
+        `;
+
+        const epsContainer = document.getElementById('episodeList');
+        if (currentEpisodes.length === 0) {
+            epsContainer.innerHTML = '<div class="notice">Episode belum tersedia</div>';
+        } else {
+            epsContainer.innerHTML = currentEpisodes.map((ep, idx) => `
+                <button class="episode-btn" data-index="${idx}" data-id="${ep.id}" data-url="${ep.url || ''}">
+                    Episode ${ep.episode} ${ep.title ? `- ${ep.title}` : ''}
+                </button>
+            `).join('');
+
+            document.querySelectorAll('.episode-btn').forEach(btn => {
+                btn.addEventListener('click', async () => {
+                    document.querySelectorAll('.episode-btn').forEach(b => b.classList.remove('active-ep'));
+                    btn.classList.add('active-ep');
+                    await playEpisode(btn.dataset.id, btn.dataset.url);
+                });
+            });
+        }
+    }
+
+    async function playEpisode(epsId, epUrl) {
+        const video = document.getElementById('animeVideo');
+        video.poster = 'https://via.placeholder.com/640x360?text=Loading...';
+        
+        try {
+            let params = {};
+            if (activeSource === 'kurama') params = { epUrl };
+            else if (activeSource === 'mobinime') params = { animeId: currentDetail?.id, epsId };
+            else params = { epsId };
+            
+            const data = await apiCall('/stream', params);
+            
+            if (data.streamUrl) {
+                if (Hls.isSupported()) {
+                    const hls = new Hls();
+                    hls.loadSource(data.streamUrl);
+                    hls.attachMedia(video);
+                } else {
+                    video.src = data.streamUrl;
+                }
+                video.play().catch(e => console.log('Auto-play prevented'));
+            } else {
+                throw new Error('Stream URL not found');
+            }
+        } catch (error) {
+            const videoArea = document.getElementById('videoArea');
+            videoArea.innerHTML = `<div class="notice">Gagal memutar: ${error.message}</div>`;
+        }
+    }
+
+    function renderPagination(hasNext, nextPage, current) {
+        const div = document.getElementById('pagination');
+        if (!hasNext && current === 1) {
+            div.innerHTML = '';
+            return;
+        }
+
+        div.innerHTML = `
+            <button class="source-btn" id="prevPage" ${current === 1 ? 'disabled' : ''}>◀ Sebelumnya</button>
+            <span style="padding: 0 12px">Halaman ${current}</span>
+            <button class="source-btn" id="nextPage" ${!hasNext ? 'disabled' : ''}>Berikutnya ▶</button>
+        `;
+
+        document.getElementById('prevPage')?.addEventListener('click', () => {
+            if (current > 1) {
+                if (currentSearchQuery) searchAnimes(currentSearchQuery, current - 1);
+                else loadAnimes(current - 1);
+            }
+        });
+
+        document.getElementById('nextPage')?.addEventListener('click', () => {
+            if (hasNext) {
+                if (currentSearchQuery) searchAnimes(currentSearchQuery, current + 1);
+                else loadAnimes(current + 1);
+            }
+        });
+    }
+
+    function escapeHtml(str) {
+        if (!str) return '';
+        return str.replace(/[&<>]/g, function(m) {
+            if (m === '&') return '&amp;';
+            if (m === '<') return '&lt;';
+            if (m === '>') return '&gt;';
+            return m;
+        });
+    }
+
+    let currentSearchQuery = '';
+
+    document.querySelectorAll('.source-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            document.querySelectorAll('.source-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            activeSource = btn.dataset.source;
+            currentSearchQuery = '';
+            document.getElementById('searchInput').value = '';
+            loadAnimes(1);
+        });
+    });
+
+    document.getElementById('searchBtn').addEventListener('click', () => {
+        const query = document.getElementById('searchInput').value.trim();
+        if (query) {
+            currentSearchQuery = query;
+            searchAnimes(query, 1);
+        } else {
+            currentSearchQuery = '';
+            loadAnimes(1);
+        }
+    });
+
+    document.getElementById('searchInput').addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') document.getElementById('searchBtn').click();
+    });
+
+    document.getElementById('backHomeBtn').addEventListener('click', () => {
+        document.getElementById('detailView').style.display = 'none';
+        document.getElementById('homeView').style.display = 'block';
+        if (currentSearchQuery) searchAnimes(currentSearchQuery, 1);
+        else loadAnimes(currentPage);
+    });
+
+    loadAnimes(1);
+</script>
+</body>
+</html>
