@@ -6,270 +6,502 @@ const cors = require('cors');
 const app = express();
 app.use(cors());
 app.use(express.json());
-app.use(express.static('public'));
 
-// ============ KURAMA API ============
+// ============ KURAMA API (Primary - Working) ============
 class KuramaAPI {
   constructor() {
-    this.u = 'https://v8.kuramanime.tel';
-    this.is = axios.create({
-      baseURL: this.u,
+    this.baseURL = 'https://v8.kuramanime.tel';
+    this.axios = axios.create({
+      baseURL: this.baseURL,
       headers: {
-        'user-agent': 'Mozilla/5.0 (Linux; Android 16; NX729J) AppleWebKit/537.36',
-        'origin': this.u,
-        'referer': this.u,
-      }
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+        'Accept': 'application/json'
+      },
+      timeout: 15000
     });
+  }
+
+  async getLatest(page = 1) {
+    try {
+      const response = await this.axios.get('/', { params: { page, need_json: true } });
+      const data = response.data;
+      const allAnimes = [
+        ...(data.ongoingAnimes?.data || []),
+        ...(data.finishedAnimes?.data || []),
+        ...(data.movieAnimes?.data || [])
+      ];
+      
+      return {
+        animes: allAnimes.map(anime => ({
+          id: anime.id,
+          title: anime.title,
+          poster: anime.poster,
+          url: `${this.baseURL}/anime/${anime.id}/${anime.slug}`,
+          source: 'Kurama',
+          rating: anime.rating || 'N/A',
+          episode: anime.latest_episode || '?'
+        })),
+        total: allAnimes.length
+      };
+    } catch (error) {
+      console.error('Kurama error:', error.message);
+      return { animes: [] };
+    }
   }
 
   async search(query, page = 1) {
-    const f = await this.is.get(`/anime`, {
-      params: { order_by: "latest", search: query, page, need_json: true }
-    });
-    return {
-      animes: f.data.animes.data.map(p => ({
-        id: p.id,
-        title: p.title,
-        poster: p.poster,
-        slug: p.slug,
-        url: `${this.u}/anime/${p.id}/${p.slug}`
-      })),
-      hasNextPage: !!f.data.animes.next_page_url,
-      nextPage: f.data.animes.next_page_url?.split('page=')[1]
-    };
-  }
-
-  async ongoing(page = 1) {
-    const f = await this.is.get('/', { params: { page, need_json: true } });
-    return {
-      animes: f.data.ongoingAnimes.data.map(p => ({
-        id: p.id, title: p.title, poster: p.poster, slug: p.slug,
-        url: `${this.u}/anime/${p.id}/${p.slug}`
-      })),
-      hasNextPage: !!f.data.ongoingAnimes.next_page_url,
-      nextPage: f.data.ongoingAnimes.next_page_url?.split('page=')[1]
-    };
-  }
-
-  async detail(url) {
-    const wb = await this.is.get(url);
-    const $ = cheerio.load(wb.data);
-    
-    const animeId = $('input#animeId').attr('value');
-    const title = $('.anime__details__title h3').text().trim();
-    const poster = $('.anime__details__pic__mobile').attr('data-setbg');
-    const sinopsis = $('#synopsisField').text().trim();
-    
-    const strEps = cheerio.load($('#episodeLists').attr('data-content') || '');
-    const episodes = [];
-    strEps('.btn-danger').each((_, el) => {
-      episodes.push({
-        episode: parseInt($(el).text().replace(/\D/g, '')) || 0,
-        title: $(el).text().trim(),
-        url: $(el).attr('href')
+    try {
+      const response = await this.axios.get('/anime', {
+        params: { search: query, page, need_json: true }
       });
-    });
-    episodes.reverse();
-    
-    return { id: animeId, title, poster, sinopsis, episodes, sourceUrl: url };
+      const data = response.data;
+      
+      return {
+        animes: (data.animes?.data || []).map(anime => ({
+          id: anime.id,
+          title: anime.title,
+          poster: anime.poster,
+          url: `${this.baseURL}/anime/${anime.id}/${anime.slug}`,
+          source: 'Kurama',
+          rating: anime.rating || 'N/A'
+        })),
+        hasNextPage: !!data.animes?.next_page_url
+      };
+    } catch (error) {
+      console.error('Kurama search error:', error.message);
+      return { animes: [] };
+    }
   }
 
-  async episodeStream(epUrl) {
-    const t = await this.is.get(epUrl);
-    const $ = cheerio.load(t.data);
-    const sources = [];
-    $('#player source').each((_, el) => {
-      sources.push({ quality: $(el).attr('size'), url: $(el).attr('src') });
-    });
-    return sources.length > 0 ? sources[0].url : null;
-  }
-}
-
-// ============ MOBINIME API ============
-class MobinimeAPI {
-  constructor() {
-    this.inst = axios.create({
-      baseURL: 'https://air.vunime.my.id/mobinime',
-      headers: {
-        'accept-encoding': 'gzip',
-        'content-type': 'application/x-www-form-urlencoded; charset=utf-8',
-        'user-agent': 'Dart/3.3 (dart:io)',
-        'x-api-key': 'ThWmZq4t7w!z%C*F-JaNdRgUkXn2r5u8'
+  async getDetail(url) {
+    try {
+      const response = await this.axios.get(url);
+      const $ = cheerio.load(response.data);
+      
+      const title = $('.anime__details__title h3').text().trim();
+      const poster = $('.anime__details__pic__mobile').attr('data-setbg');
+      const sinopsis = $('#synopsisField').text().trim();
+      const rating = $('.anime__details__pic__mobile .ep').text().trim();
+      
+      const episodes = [];
+      const episodeContent = $('#episodeLists').attr('data-content');
+      if (episodeContent) {
+        const $eps = cheerio.load(episodeContent);
+        $eps('.btn-danger').each((_, el) => {
+          const epTitle = $eps(el).text().trim();
+          const epUrl = $eps(el).attr('href');
+          const epNum = parseInt(epTitle.replace(/\D/g, '')) || 0;
+          episodes.push({ episode: epNum, title: epTitle, url: epUrl });
+        });
+        episodes.reverse();
       }
-    });
+      
+      const genres = [];
+      $('.breadcrumb__links__v2__tags a').each((_, el) => {
+        genres.push($(el).text().trim().replace(',', ''));
+      });
+      
+      return { title, poster, sinopsis, rating, episodes, genres, source: 'Kurama' };
+    } catch (error) {
+      throw error;
+    }
   }
 
-  async search(query, page = 0) {
-    const { data } = await this.inst.post('/anime/search', {
-      perpage: '20',
-      startpage: page.toString(),
-      q: query
-    });
-    return {
-      animes: (data.data || []).map(a => ({
-        id: a.id, title: a.title, poster: a.poster
-      })),
-      nextPage: data.nextpage ? page + 1 : null
-    };
-  }
-
-  async ongoing(page = 0) {
-    return this.search('', page);
-  }
-
-  async detail(id) {
-    const { data } = await this.inst.post('/anime/detail', { id: id.toString() });
-    const info = data.data;
-    const episodes = (info.episode || []).map(ep => ({
-      episode: ep.episode,
-      title: ep.name,
-      id: ep.id
-    }));
-    return {
-      id: info.id, title: info.title, poster: info.poster,
-      sinopsis: info.sinopsis, episodes
-    };
-  }
-
-  async stream(animeId, epsId, quality = 'HD') {
-    const { data: srv } = await this.inst.post('/anime/get-server-list', {
-      id: epsId.toString(),
-      animeId: animeId.toString(),
-      jenisAnime: '1',
-      userId: ''
-    });
-    const { data } = await this.inst.post('/anime/get-url-video', {
-      url: srv.serverurl,
-      quality: quality,
-      position: '0'
-    });
-    return data.url;
+  async getStream(epUrl) {
+    try {
+      const response = await this.axios.get(epUrl);
+      const $ = cheerio.load(response.data);
+      
+      const videos = [];
+      $('#player source').each((_, el) => {
+        const src = $(el).attr('src');
+        if (src) videos.push({ url: src, quality: $(el).attr('size') || 'Auto' });
+      });
+      
+      return { videos, success: videos.length > 0 };
+    } catch (error) {
+      return { videos: [], success: false };
+    }
   }
 }
 
-// ============ ANIMEIN API ============
-class AnimeinAPI {
+// ============ OTAKUDESU API (via MyAnimelist style) ============
+class OtakudesuAPI {
   constructor() {
-    this.baseUrl = 'https://animeinweb.com';
+    this.baseURL = 'https://otakudesu.cloud';
   }
 
-  async request(url) {
-    const res = await axios.get(url, {
-      headers: {
-        'User-Agent': 'Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36',
-        'Referer': this.baseUrl
-      }
-    });
-    return res.data?.data;
+  async getLatest() {
+    try {
+      const response = await axios.get(`${this.baseURL}/ongoing-anime`, {
+        headers: { 'User-Agent': 'Mozilla/5.0' },
+        timeout: 10000
+      });
+      const $ = cheerio.load(response.data);
+      const animes = [];
+      
+      $('.venz .jdlbar .detpost').each((_, el) => {
+        const title = $(el).find('.jdl').text().trim();
+        const poster = $(el).find('img').attr('src');
+        const url = $(el).find('a').attr('href');
+        const episode = $(el).find('.epz').text().trim();
+        
+        if (title) {
+          animes.push({
+            id: url?.split('/').filter(Boolean).pop(),
+            title,
+            poster,
+            url,
+            source: 'Otakudesu',
+            episode
+          });
+        }
+      });
+      
+      return { animes: animes.slice(0, 30) };
+    } catch (error) {
+      console.error('Otakudesu error:', error.message);
+      return { animes: [] };
+    }
   }
 
-  async search(keyword, page = 0) {
-    const data = await this.request(
-      `${this.baseUrl}/api/proxy/3/2/explore/movie?page=${page}&sort=views&keyword=${encodeURIComponent(keyword)}`
-    );
-    return {
-      animes: (data || []).map(m => ({
-        id: m.id, title: m.title, poster: m.poster
-      })),
-      nextPage: data?.next_page_url ? page + 1 : null
-    };
+  async search(query) {
+    try {
+      const response = await axios.get(`${this.baseURL}?s=${encodeURIComponent(query)}&post_type=anime`, {
+        headers: { 'User-Agent': 'Mozilla/5.0' }
+      });
+      const $ = cheerio.load(response.data);
+      const animes = [];
+      
+      $('.chivsrc li').each((_, el) => {
+        const title = $(el).find('h2 a').text().trim();
+        const poster = $(el).find('img').attr('src');
+        const url = $(el).find('a').attr('href');
+        
+        if (title) {
+          animes.push({ title, poster, url, source: 'Otakudesu' });
+        }
+      });
+      
+      return { animes };
+    } catch (error) {
+      return { animes: [] };
+    }
   }
 
-  async ongoing(page = 0) {
-    return this.search('', page);
+  async getDetail(url) {
+    try {
+      const response = await axios.get(url);
+      const $ = cheerio.load(response.data);
+      
+      const title = $('.infozingle h1').text().trim();
+      const poster = $('.fotoanime img').attr('src');
+      const sinopsis = $('.sinopc').text().trim();
+      
+      const episodes = [];
+      $('.episodelist ul li').each((_, el) => {
+        const epNum = $(el).find('strong a').text().trim();
+        const epUrl = $(el).find('a').attr('href');
+        if (epUrl) {
+          episodes.push({ episode: epNum, url: epUrl });
+        }
+      });
+      
+      return { title, poster, sinopsis, episodes: episodes.reverse(), source: 'Otakudesu' };
+    } catch (error) {
+      throw error;
+    }
   }
 
-  async detail(id) {
-    const detail = await this.request(`${this.baseUrl}/api/proxy/3/2/movie/detail/${id}`);
-    const episodesData = await this.request(`${this.baseUrl}/api/proxy/3/2/movie/episode/${id}?page=0`);
-    const episodes = (episodesData?.episode || []).map(ep => ({
-      episode: ep.episode,
-      title: ep.title,
-      id: ep.id
-    }));
-    return {
-      id: detail.id, title: detail.title, poster: detail.poster,
-      sinopsis: detail.sinopsis, episodes
-    };
-  }
-
-  async stream(episodeId) {
-    const data = await this.request(`${this.baseUrl}/api/proxy/3/2/episode/streamnew/${episodeId}`);
-    return data?.url;
+  async getStream(epUrl) {
+    try {
+      const response = await axios.get(epUrl);
+      const $ = cheerio.load(response.data);
+      let videoUrl = '';
+      
+      $('iframe').each((_, el) => {
+        const src = $(el).attr('src');
+        if (src && (src.includes('stream') || src.includes('video'))) {
+          videoUrl = src;
+        }
+      });
+      
+      return { videos: videoUrl ? [{ url: videoUrl }] : [], success: !!videoUrl };
+    } catch (error) {
+      return { videos: [], success: false };
+    }
   }
 }
 
-// Inisialisasi API
+// ============ SAMEHADAKU API ============
+class SamehadakuAPI {
+  constructor() {
+    this.baseURL = 'https://samehadaku.email';
+  }
+
+  async getLatest() {
+    try {
+      const response = await axios.get(this.baseURL, {
+        headers: { 'User-Agent': 'Mozilla/5.0' },
+        timeout: 10000
+      });
+      const $ = cheerio.load(response.data);
+      const animes = [];
+      
+      $('.post').each((_, el) => {
+        const title = $(el).find('.entry-title a').text().trim();
+        const poster = $(el).find('img').attr('src');
+        const url = $(el).find('.entry-title a').attr('href');
+        
+        if (title && url) {
+          animes.push({ title, poster, url, source: 'Samehadaku' });
+        }
+      });
+      
+      return { animes: animes.slice(0, 20) };
+    } catch (error) {
+      console.error('Samehadaku error:', error.message);
+      return { animes: [] };
+    }
+  }
+
+  async search(query) {
+    try {
+      const response = await axios.get(`${this.baseURL}/?s=${encodeURIComponent(query)}`, {
+        headers: { 'User-Agent': 'Mozilla/5.0' }
+      });
+      const $ = cheerio.load(response.data);
+      const animes = [];
+      
+      $('.result-item').each((_, el) => {
+        const title = $(el).find('h3 a').text().trim();
+        const poster = $(el).find('img').attr('src');
+        const url = $(el).find('a').attr('href');
+        
+        if (title) animes.push({ title, poster, url, source: 'Samehadaku' });
+      });
+      
+      return { animes };
+    } catch (error) {
+      return { animes: [] };
+    }
+  }
+}
+
+// ============ ANOBOY API ============
+class AnoboyAPI {
+  constructor() {
+    this.baseURL = 'https://anoboy.ch';
+  }
+
+  async getLatest() {
+    try {
+      const response = await axios.get(this.baseURL, {
+        headers: { 'User-Agent': 'Mozilla/5.0' },
+        timeout: 10000
+      });
+      const $ = cheerio.load(response.data);
+      const animes = [];
+      
+      $('.entry').each((_, el) => {
+        const title = $(el).find('.entry-title a').text().trim();
+        const poster = $(el).find('img').attr('src');
+        const url = $(el).find('.entry-title a').attr('href');
+        
+        if (title && title.toLowerCase().includes('anime')) {
+          animes.push({ title, poster, url, source: 'Anoboy' });
+        }
+      });
+      
+      return { animes: animes.slice(0, 20) };
+    } catch (error) {
+      console.error('Anoboy error:', error.message);
+      return { animes: [] };
+    }
+  }
+}
+
+// ============ KIRYUU API (Backup) ============
+class KiryuuAPI {
+  constructor() {
+    this.baseURL = 'https://kiryuu.id';
+  }
+
+  async getLatest() {
+    try {
+      const response = await axios.get(this.baseURL, {
+        headers: { 'User-Agent': 'Mozilla/5.0' },
+        timeout: 10000
+      });
+      const $ = cheerio.load(response.data);
+      const animes = [];
+      
+      $('.list-anime .anime').each((_, el) => {
+        const title = $(el).find('.title a').text().trim();
+        const poster = $(el).find('img').attr('src');
+        const url = $(el).find('.title a').attr('href');
+        
+        if (title) {
+          animes.push({ title, poster, url, source: 'Kiryuu' });
+        }
+      });
+      
+      return { animes: animes.slice(0, 20) };
+    } catch (error) {
+      console.error('Kiryuu error:', error.message);
+      return { animes: [] };
+    }
+  }
+}
+
+// Initialize APIs
 const kurama = new KuramaAPI();
-const mobinime = new MobinimeAPI();
-const animein = new AnimeinAPI();
+const otakudesu = new OtakudesuAPI();
+const samehadaku = new SamehadakuAPI();
+const anoboy = new AnoboyAPI();
+const kiryuu = new KiryuuAPI();
 
-// ============ ENDPOINTS ============
-app.get('/api/:source/search', async (req, res) => {
+// ============ API ENDPOINTS ============
+
+// Get latest anime from all sources
+app.get('/api/latest', async (req, res) => {
   try {
-    const { source } = req.params;
-    const { q, page = 1 } = req.query;
-    let result;
+    const sources = await Promise.allSettled([
+      kurama.getLatest(),
+      otakudesu.getLatest(),
+      samehadaku.getLatest(),
+      anoboy.getLatest(),
+      kiryuu.getLatest()
+    ]);
     
-    if (source === 'kurama') result = await kurama.search(q, parseInt(page));
-    else if (source === 'mobinime') result = await mobinime.search(q, parseInt(page) - 1);
-    else result = await animein.search(q, parseInt(page) - 1);
+    let allAnimes = [];
+    sources.forEach(source => {
+      if (source.status === 'fulfilled' && source.value.animes) {
+        allAnimes.push(...source.value.animes);
+      }
+    });
     
-    res.json(result);
+    // Remove duplicates by title
+    const uniqueAnimes = [];
+    const titles = new Set();
+    for (const anime of allAnimes) {
+      const cleanTitle = anime.title.toLowerCase().trim();
+      if (!titles.has(cleanTitle) && anime.title) {
+        titles.add(cleanTitle);
+        uniqueAnimes.push(anime);
+      }
+    }
+    
+    res.json({ 
+      animes: uniqueAnimes.slice(0, 60),
+      total: uniqueAnimes.length,
+      sources: sources.filter(s => s.status === 'fulfilled' && s.value.animes?.length > 0).length
+    });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
 });
 
-app.get('/api/:source/ongoing', async (req, res) => {
+// Search anime across all sources
+app.get('/api/search', async (req, res) => {
+  const { q } = req.query;
+  if (!q) {
+    return res.json({ animes: [] });
+  }
+  
   try {
-    const { source } = req.params;
-    const { page = 1 } = req.query;
-    let result;
+    const sources = await Promise.allSettled([
+      kurama.search(q),
+      otakudesu.search(q),
+      samehadaku.search(q)
+    ]);
     
-    if (source === 'kurama') result = await kurama.ongoing(parseInt(page));
-    else if (source === 'mobinime') result = await mobinime.ongoing(parseInt(page) - 1);
-    else result = await animein.ongoing(parseInt(page) - 1);
+    let allAnimes = [];
+    sources.forEach(source => {
+      if (source.status === 'fulfilled' && source.value.animes) {
+        allAnimes.push(...source.value.animes);
+      }
+    });
     
-    res.json(result);
+    const uniqueAnimes = [];
+    const titles = new Set();
+    for (const anime of allAnimes) {
+      const cleanTitle = anime.title.toLowerCase().trim();
+      if (!titles.has(cleanTitle)) {
+        titles.add(cleanTitle);
+        uniqueAnimes.push(anime);
+      }
+    }
+    
+    res.json({ animes: uniqueAnimes });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
 });
 
-app.get('/api/:source/detail', async (req, res) => {
+// Get anime detail (try all sources)
+app.get('/api/detail', async (req, res) => {
+  const { url, source } = req.query;
+  if (!url) {
+    return res.status(400).json({ error: 'URL required' });
+  }
+  
   try {
-    const { source } = req.params;
-    const { id, url } = req.query;
-    let result;
+    let detail = null;
     
-    if (source === 'kurama') result = await kurama.detail(url);
-    else if (source === 'mobinime') result = await mobinime.detail(id);
-    else result = await animein.detail(id);
+    if (source === 'Kurama' || url.includes('kuramanime')) {
+      detail = await kurama.getDetail(url);
+    } else if (source === 'Otakudesu' || url.includes('otakudesu')) {
+      detail = await otakudesu.getDetail(url);
+    } else {
+      // Try all sources
+      try { detail = await kurama.getDetail(url); } catch(e) {}
+      if (!detail) try { detail = await otakudesu.getDetail(url); } catch(e) {}
+    }
     
-    res.json(result);
+    if (detail) {
+      res.json(detail);
+    } else {
+      res.status(404).json({ error: 'Detail not found' });
+    }
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
 });
 
-app.get('/api/:source/stream', async (req, res) => {
+// Get stream URL
+app.get('/api/stream', async (req, res) => {
+  const { url, source } = req.query;
+  if (!url) {
+    return res.status(400).json({ error: 'URL required' });
+  }
+  
   try {
-    const { source } = req.params;
-    const { animeId, epsId, epUrl } = req.query;
-    let streamUrl;
+    let stream = null;
     
-    if (source === 'kurama') streamUrl = await kurama.episodeStream(epUrl);
-    else if (source === 'mobinime') streamUrl = await mobinime.stream(animeId, epsId);
-    else streamUrl = await animein.stream(epsId);
+    if (source === 'Kurama' || url.includes('kuramanime')) {
+      stream = await kurama.getStream(url);
+    } else if (source === 'Otakudesu' || url.includes('otakudesu')) {
+      stream = await otakudesu.getStream(url);
+    }
     
-    res.json({ streamUrl });
+    if (stream && stream.success) {
+      res.json(stream);
+    } else {
+      res.status(404).json({ error: 'Stream not found' });
+    }
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
 });
 
-const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => {
-  console.log(`Server running on http://localhost:${PORT}`);
+// Health check
+app.get('/api/health', (req, res) => {
+  res.json({ 
+    status: 'OK', 
+    sources: ['Kurama', 'Otakudesu', 'Samehadaku', 'Anoboy', 'Kiryuu'],
+    timestamp: new Date().toISOString()
+  });
 });
+
+module.exports = app;
