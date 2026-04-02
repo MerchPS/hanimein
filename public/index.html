@@ -2,8 +2,8 @@
 <html lang="id">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
-    <title>AniNexus - Streaming Anime Terlengkap</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AniNexus Pro - Streaming Anime Terlengkap</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <script src="https://cdn.jsdelivr.net/npm/hls.js@1"></script>
@@ -16,36 +16,25 @@
 
         body {
             font-family: 'Inter', sans-serif;
-            background: #0a0c12;
+            background: linear-gradient(135deg, #0a0c12 0%, #121520 100%);
             color: #eef2ff;
+            min-height: 100vh;
         }
 
-        ::-webkit-scrollbar {
-            width: 6px;
-            height: 6px;
-        }
-        ::-webkit-scrollbar-track {
-            background: #1e1f2c;
-        }
-        ::-webkit-scrollbar-thumb {
-            background: #ff5e7c;
-            border-radius: 8px;
+        .navbar {
+            background: rgba(10, 12, 18, 0.95);
+            backdrop-filter: blur(16px);
+            border-bottom: 1px solid rgba(255, 94, 124, 0.3);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            padding: 14px 0;
         }
 
         .container {
             max-width: 1400px;
             margin: 0 auto;
             padding: 0 24px;
-        }
-
-        .navbar {
-            background: rgba(10, 12, 18, 0.95);
-            backdrop-filter: blur(16px);
-            border-bottom: 1px solid rgba(255, 94, 124, 0.2);
-            position: sticky;
-            top: 0;
-            z-index: 100;
-            padding: 14px 0;
         }
 
         .nav-flex {
@@ -57,7 +46,7 @@
         }
 
         .logo {
-            font-size: 1.7rem;
+            font-size: 1.8rem;
             font-weight: 800;
             background: linear-gradient(135deg, #FF5E7C, #FFB347);
             -webkit-background-clip: text;
@@ -65,26 +54,22 @@
             color: transparent;
         }
 
-        .logo i {
-            background: none;
-            color: #FF5E7C;
-            margin-right: 6px;
-        }
-
         .search-box {
             display: flex;
             background: #1e1f2c;
             border-radius: 60px;
-            padding: 6px 16px;
+            padding: 8px 20px;
             align-items: center;
             gap: 12px;
             flex: 1;
-            max-width: 460px;
+            max-width: 500px;
             border: 1px solid #2d2f3e;
+            transition: all 0.3s;
         }
 
         .search-box:focus-within {
             border-color: #FF5E7C;
+            box-shadow: 0 0 15px rgba(255, 94, 124, 0.3);
         }
 
         .search-box input {
@@ -94,6 +79,7 @@
             color: white;
             width: 100%;
             outline: none;
+            font-size: 1rem;
         }
 
         .search-box button {
@@ -104,48 +90,35 @@
             font-size: 1.2rem;
         }
 
-        .category-buttons {
-            display: flex;
-            gap: 8px;
-            flex-wrap: wrap;
-        }
-
-        .cat-btn {
-            background: #181b26;
-            border: none;
-            padding: 8px 18px;
-            border-radius: 36px;
-            font-weight: 600;
+        .source-stats {
+            background: #1e1f2c;
+            padding: 8px 16px;
+            border-radius: 40px;
             font-size: 0.8rem;
-            cursor: pointer;
-            color: #ccd6f0;
-            transition: 0.2s;
-        }
-
-        .cat-btn.active {
-            background: #FF5E7C;
-            color: white;
+            color: #FFB347;
         }
 
         .anime-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
             gap: 28px;
             margin: 40px 0;
         }
 
         .anime-card {
             background: #13151f;
-            border-radius: 24px;
+            border-radius: 20px;
             overflow: hidden;
             cursor: pointer;
-            transition: transform 0.25s ease;
+            transition: all 0.3s ease;
             border: 1px solid #262838;
+            position: relative;
         }
 
         .anime-card:hover {
-            transform: translateY(-6px);
+            transform: translateY(-8px);
             border-color: #FF5E7C;
+            box-shadow: 0 20px 30px -12px rgba(255, 94, 124, 0.2);
         }
 
         .card-img {
@@ -158,17 +131,33 @@
             width: 100%;
             height: 100%;
             object-fit: cover;
+            transition: transform 0.3s;
+        }
+
+        .anime-card:hover .card-img img {
+            transform: scale(1.05);
+        }
+
+        .source-badge {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: #FF5E7C;
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 0.7rem;
+            font-weight: bold;
+            z-index: 1;
         }
 
         .episode-badge {
             position: absolute;
-            bottom: 8px;
-            right: 8px;
-            background: #FF5E7C;
-            padding: 4px 8px;
-            border-radius: 12px;
+            bottom: 10px;
+            left: 10px;
+            background: rgba(0,0,0,0.7);
+            padding: 4px 10px;
+            border-radius: 20px;
             font-size: 0.7rem;
-            font-weight: bold;
         }
 
         .card-info {
@@ -182,42 +171,44 @@
             -webkit-line-clamp: 2;
             -webkit-box-orient: vertical;
             overflow: hidden;
+            line-height: 1.4;
         }
 
         .loader {
             text-align: center;
             padding: 60px;
-            font-size: 1.2rem;
-            color: #FFB347;
         }
 
-        .section-title {
-            font-size: 1.8rem;
-            font-weight: 700;
-            margin: 32px 0 12px 0;
-            border-left: 5px solid #FF5E7C;
-            padding-left: 20px;
+        .loader i {
+            font-size: 3rem;
+            color: #FF5E7C;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
         }
 
         .episode-panel {
             background: #10121c;
-            border-radius: 32px;
+            border-radius: 28px;
             padding: 28px;
             margin: 20px 0;
-            border: 1px solid #292e42;
         }
 
         .anime-header {
             display: flex;
-            gap: 28px;
+            gap: 32px;
             flex-wrap: wrap;
-            margin-bottom: 28px;
+            margin-bottom: 32px;
         }
 
         .anime-poster {
-            width: 200px;
+            width: 220px;
             border-radius: 20px;
             overflow: hidden;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
         }
 
         .anime-poster img {
@@ -228,18 +219,23 @@
             flex: 1;
         }
 
-        .detail-meta {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 16px;
-            margin: 16px 0;
-            padding: 12px;
-            background: #1a1d2a;
-            border-radius: 16px;
+        .rating {
+            color: #FFB347;
+            margin: 10px 0;
         }
 
-        .detail-meta span {
-            color: #FFB347;
+        .genres {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin: 15px 0;
+        }
+
+        .genre-tag {
+            background: #FF5E7C;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.8rem;
         }
 
         .episode-list {
@@ -247,37 +243,39 @@
             flex-wrap: wrap;
             gap: 12px;
             margin: 24px 0;
-            max-height: 400px;
+            max-height: 450px;
             overflow-y: auto;
-            padding: 6px 4px;
+            padding: 10px;
         }
 
         .episode-btn {
             background: #1e2130;
             border: none;
-            padding: 10px 18px;
+            padding: 10px 20px;
             border-radius: 40px;
             font-weight: 600;
             color: #eef2ff;
             cursor: pointer;
-            transition: 0.1s;
+            transition: all 0.2s;
+            font-size: 0.85rem;
         }
 
         .episode-btn:hover, .episode-btn.active-ep {
             background: #FF5E7C;
-            color: white;
+            transform: scale(1.05);
         }
 
         .video-container {
             margin-top: 20px;
-            border-radius: 28px;
+            border-radius: 20px;
             overflow: hidden;
             background: black;
+            position: relative;
         }
 
         video {
             width: 100%;
-            max-height: 500px;
+            max-height: 550px;
             outline: none;
         }
 
@@ -291,24 +289,58 @@
         .quality-btn {
             background: #1e2130;
             border: none;
-            padding: 6px 14px;
-            border-radius: 20px;
+            padding: 8px 16px;
+            border-radius: 25px;
             cursor: pointer;
+            color: white;
+            transition: all 0.2s;
         }
 
-        .quality-btn.active-quality {
+        .quality-btn:hover, .quality-btn.active-quality {
             background: #FF5E7C;
         }
 
         .back-btn {
             background: none;
-            border: 1px solid #ff5e7c;
-            padding: 8px 20px;
+            border: 2px solid #ff5e7c;
+            padding: 10px 24px;
             border-radius: 40px;
             color: #ff5e7c;
-            font-weight: 600;
+            font-weight: 700;
             cursor: pointer;
-            margin-bottom: 16px;
+            margin-bottom: 20px;
+            transition: all 0.2s;
+        }
+
+        .back-btn:hover {
+            background: #ff5e7c;
+            color: white;
+        }
+
+        .pagination {
+            display: flex;
+            justify-content: center;
+            gap: 16px;
+            margin: 30px 0;
+        }
+
+        .page-btn {
+            background: #1e2130;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 40px;
+            cursor: pointer;
+            color: white;
+            transition: all 0.2s;
+        }
+
+        .page-btn:hover:not(:disabled) {
+            background: #FF5E7C;
+        }
+
+        .page-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
         }
 
         footer {
@@ -322,18 +354,12 @@
         .notice {
             background: #FF5E7C20;
             border-radius: 20px;
-            padding: 12px;
+            padding: 20px;
             text-align: center;
+            margin: 20px 0;
         }
 
-        .pagination {
-            display: flex;
-            justify-content: center;
-            gap: 16px;
-            margin: 24px 0;
-        }
-
-        @media (max-width: 720px) {
+        @media (max-width: 768px) {
             .container {
                 padding: 0 16px;
             }
@@ -342,7 +368,11 @@
                 grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
             }
             .anime-poster {
-                width: 120px;
+                width: 130px;
+            }
+            .episode-btn {
+                padding: 6px 14px;
+                font-size: 0.75rem;
             }
         }
     </style>
@@ -351,22 +381,24 @@
 <div class="navbar">
     <div class="container nav-flex">
         <div class="logo">
-            <i class="fas fa-film"></i> AniNexus
+            <i class="fas fa-tv"></i> AniNexus Pro
         </div>
         <div class="search-box">
-            <input type="text" id="searchInput" placeholder="Cari anime... (Naruto, Jujutsu, One Piece)">
+            <input type="text" id="searchInput" placeholder="Cari anime favoritmu... (Naruto, One Piece, JJK)">
             <button id="searchBtn"><i class="fas fa-search"></i></button>
         </div>
-        <div class="category-buttons">
-            <button class="cat-btn active" data-type="ongoing">🔥 Ongoing</button>
-            <button class="cat-btn" data-type="finished">✅ Finished</button>
-            <button class="cat-btn" data-type="movie">🎬 Movie</button>
+        <div class="source-stats" id="sourceStats">
+            <i class="fas fa-database"></i> <span id="sourceCount">5</span> Sources
         </div>
     </div>
 </div>
 
-<div class="container" id="appContainer">
+<div class="container">
     <div id="homeView">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin: 20px 0;">
+            <h2><i class="fas fa-fire" style="color: #FF5E7C;"></i> Anime Terbaru & Terupdate</h2>
+            <button class="page-btn" id="refreshBtn"><i class="fas fa-sync-alt"></i> Refresh</button>
+        </div>
         <div id="animeGrid" class="anime-grid"></div>
         <div id="pagination" class="pagination"></div>
     </div>
@@ -375,12 +407,12 @@
         <div id="detailContent"></div>
     </div>
 </div>
+
 <footer>
-    <p>AniNexus - Sumber: Kuramanime | Streaming anime gratis terbaik</p>
+    <p><i class="fas fa-film"></i> AniNexus Pro - Streaming Anime dari berbagai sumber terpercaya | Updated daily</p>
 </footer>
 
 <script>
-    let currentType = 'ongoing';
     let currentPage = 1;
     let currentSearchQuery = '';
     let currentVideoSources = [];
@@ -389,93 +421,123 @@
         const url = new URL(`/api${endpoint}`, window.location.origin);
         Object.keys(params).forEach(key => url.searchParams.append(key, params[key]));
         const response = await fetch(url);
-        if (!response.ok) throw new Error(`API Error: ${response.status}`);
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
         return response.json();
     }
 
-    async function loadAnimes(page = 1) {
+    async function loadAnimes() {
         const grid = document.getElementById('animeGrid');
-        grid.innerHTML = '<div class="loader"><i class="fas fa-spinner fa-pulse"></i> Memuat anime...</div>';
+        grid.innerHTML = '<div class="loader"><i class="fas fa-spinner fa-pulse"></i><p>Memuat anime terbaru...</p></div>';
         
         try {
             let data;
             if (currentSearchQuery) {
-                data = await apiCall('/search', { q: currentSearchQuery, page });
+                data = await apiCall('/search', { q: currentSearchQuery });
             } else {
-                data = await apiCall(`/${currentType}`, { page });
+                data = await apiCall('/latest');
             }
             
-            renderAnimeGrid(data.animes);
-            renderPagination(data.hasNextPage, data.nextPage, page);
+            document.getElementById('sourceCount').textContent = data.sources || 5;
+            
+            if (data.animes && data.animes.length > 0) {
+                renderAnimeGrid(data.animes);
+            } else {
+                grid.innerHTML = '<div class="notice"><i class="fas fa-frown"></i> Tidak ada anime ditemukan. Coba kata kunci lain!</div>';
+            }
         } catch (error) {
-            grid.innerHTML = `<div class="notice">Error: ${error.message}</div>`;
+            grid.innerHTML = `<div class="notice"><i class="fas fa-exclamation-triangle"></i> Error: ${error.message}<br>Coba refresh halaman.</div>`;
         }
     }
 
     function renderAnimeGrid(animes) {
         const grid = document.getElementById('animeGrid');
-        if (!animes || animes.length === 0) {
-            grid.innerHTML = '<div class="notice">Tidak ada anime ditemukan</div>';
-            return;
-        }
-
-        grid.innerHTML = animes.map(anime => `
-            <div class="anime-card" data-url="${anime.url}">
+        const displayAnimes = animes.slice((currentPage - 1) * 24, currentPage * 24);
+        
+        grid.innerHTML = displayAnimes.map(anime => `
+            <div class="anime-card" data-url="${anime.url}" data-source="${anime.source}">
                 <div class="card-img">
                     <img src="${anime.poster || 'https://via.placeholder.com/200x280?text=No+Image'}" 
-                         onerror="this.src='https://via.placeholder.com/200x280?text=Error'">
-                    ${anime.episode ? `<div class="episode-badge">EP ${anime.episode}</div>` : ''}
+                         onerror="this.src='https://via.placeholder.com/200x280?text=Anime'">
+                    <div class="source-badge">${anime.source || 'Kurama'}</div>
+                    ${anime.episode ? `<div class="episode-badge"><i class="fas fa-play"></i> ${anime.episode}</div>` : ''}
                 </div>
                 <div class="card-info">
                     <div class="card-title">${escapeHtml(anime.title)}</div>
+                    ${anime.rating && anime.rating !== 'N/A' ? `<div style="font-size:0.7rem; margin-top:5px;"><i class="fas fa-star" style="color:#FFB347;"></i> ${anime.rating}</div>` : ''}
                 </div>
             </div>
         `).join('');
 
         document.querySelectorAll('.anime-card').forEach(card => {
-            card.addEventListener('click', () => showDetail(card.dataset.url));
+            card.addEventListener('click', () => showDetail(card.dataset.url, card.dataset.source));
+        });
+        
+        renderPagination(animes.length);
+    }
+
+    function renderPagination(totalItems) {
+        const totalPages = Math.ceil(totalItems / 24);
+        if (totalPages <= 1) {
+            document.getElementById('pagination').innerHTML = '';
+            return;
+        }
+        
+        document.getElementById('pagination').innerHTML = `
+            <button class="page-btn" id="prevPage" ${currentPage === 1 ? 'disabled' : ''}>◀ Prev</button>
+            <span style="padding: 0 15px;">Halaman ${currentPage} dari ${totalPages}</span>
+            <button class="page-btn" id="nextPage" ${currentPage === totalPages ? 'disabled' : ''}>Next ▶</button>
+        `;
+        
+        document.getElementById('prevPage')?.addEventListener('click', () => {
+            if (currentPage > 1) {
+                currentPage--;
+                loadAnimes();
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            }
+        });
+        
+        document.getElementById('nextPage')?.addEventListener('click', () => {
+            if (currentPage < totalPages) {
+                currentPage++;
+                loadAnimes();
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            }
         });
     }
 
-    async function showDetail(url) {
+    async function showDetail(url, source) {
         document.getElementById('homeView').style.display = 'none';
         document.getElementById('detailView').style.display = 'block';
         const detailDiv = document.getElementById('detailContent');
-        detailDiv.innerHTML = '<div class="loader">Mengambil detail...</div>';
-
+        detailDiv.innerHTML = '<div class="loader"><i class="fas fa-spinner fa-pulse"></i><p>Mengambil detail anime...</p></div>';
+        
         try {
-            const detail = await apiCall('/detail', { url });
+            const detail = await apiCall('/detail', { url, source });
             renderDetail(detail);
         } catch (error) {
-            detailDiv.innerHTML = `<div class="notice">Error: ${error.message}</div>`;
+            detailDiv.innerHTML = `<div class="notice"><i class="fas fa-exclamation-triangle"></i> Gagal mengambil detail: ${error.message}</div>`;
         }
     }
 
     function renderDetail(detail) {
         const container = document.getElementById('detailContent');
         
-        // Build details HTML
-        let detailsHtml = '';
-        if (detail.details) {
-            detailsHtml = '<div class="detail-meta">';
-            for (const [key, value] of Object.entries(detail.details)) {
-                detailsHtml += `<span><strong>${key}:</strong> ${escapeHtml(value)}</span>`;
-            }
-            detailsHtml += '</div>';
-        }
-        
         container.innerHTML = `
             <div class="episode-panel">
                 <div class="anime-header">
                     <div class="anime-poster">
-                        <img src="${detail.poster || 'https://via.placeholder.com/200x280'}" onerror="this.src='https://via.placeholder.com/200x280'">
+                        <img src="${detail.poster || 'https://via.placeholder.com/220x310'}" onerror="this.src='https://via.placeholder.com/220x310'">
                     </div>
                     <div class="anime-info-det">
                         <h2>${escapeHtml(detail.title)}</h2>
-                        ${detail.alternativeTitle ? `<p><small>${escapeHtml(detail.alternativeTitle)}</small></p>` : ''}
-                        ${detail.rating ? `<p><i class="fas fa-star" style="color:#FFB347;"></i> Rating: ${detail.rating}</p>` : ''}
-                        ${detailsHtml}
-                        <p style="margin-top: 12px;">${escapeHtml(detail.sinopsis?.substring(0, 500) || 'Sinopsis tidak tersedia')}${detail.sinopsis?.length > 500 ? '...' : ''}</p>
+                        ${detail.rating ? `<div class="rating"><i class="fas fa-star"></i> Rating: ${detail.rating}</div>` : ''}
+                        ${detail.genres && detail.genres.length ? `
+                            <div class="genres">
+                                ${detail.genres.map(g => `<span class="genre-tag">${escapeHtml(g)}</span>`).join('')}
+                            </div>
+                        ` : ''}
+                        <div class="source-badge" style="display: inline-block; margin-top: 10px;">Source: ${detail.source || 'Kurama'}</div>
+                        <p style="margin-top: 20px; line-height: 1.6;">${escapeHtml(detail.sinopsis?.substring(0, 600) || 'Sinopsis tidak tersedia')}${detail.sinopsis?.length > 600 ? '...' : ''}</p>
                     </div>
                 </div>
                 <h3><i class="fas fa-list"></i> Daftar Episode (${detail.episodes?.length || 0})</h3>
@@ -488,38 +550,37 @@
                 </div>
             </div>
         `;
-
+        
         const epsContainer = document.getElementById('episodeList');
         if (!detail.episodes || detail.episodes.length === 0) {
-            epsContainer.innerHTML = '<div class="notice">Episode belum tersedia</div>';
+            epsContainer.innerHTML = '<div class="notice">Episode belum tersedia untuk anime ini</div>';
         } else {
             epsContainer.innerHTML = detail.episodes.map((ep, idx) => `
                 <button class="episode-btn" data-index="${idx}" data-url="${ep.url}">
-                    Episode ${ep.episode} ${ep.title ? `- ${ep.title.substring(0, 30)}` : ''}
+                    <i class="fas fa-play-circle"></i> Episode ${ep.episode}
                 </button>
             `).join('');
-
+            
             document.querySelectorAll('.episode-btn').forEach(btn => {
                 btn.addEventListener('click', async () => {
                     document.querySelectorAll('.episode-btn').forEach(b => b.classList.remove('active-ep'));
                     btn.classList.add('active-ep');
-                    await playEpisode(btn.dataset.url);
+                    await playEpisode(btn.dataset.url, detail.source);
                 });
             });
         }
     }
-
-    async function playEpisode(epUrl) {
+    
+    async function playEpisode(epUrl, source) {
         const video = document.getElementById('animeVideo');
         const qualitySelector = document.getElementById('qualitySelector');
-        video.poster = 'https://via.placeholder.com/640x360?text=Loading...';
+        video.poster = 'https://via.placeholder.com/640x360?text=Loading+Stream...';
         
         try {
-            const data = await apiCall('/stream', { url: epUrl });
+            const data = await apiCall('/stream', { url: epUrl, source });
             currentVideoSources = data.videos || [];
             
             if (currentVideoSources.length > 0) {
-                // Show quality selector
                 if (currentVideoSources.length > 1) {
                     qualitySelector.style.display = 'flex';
                     qualitySelector.innerHTML = currentVideoSources.map((src, idx) => `
@@ -537,56 +598,28 @@
                 } else {
                     qualitySelector.style.display = 'none';
                 }
-                
-                // Load first quality
                 loadVideo(currentVideoSources[0].url);
             } else {
-                throw new Error('No video source found');
+                throw new Error('Video source tidak tersedia');
             }
         } catch (error) {
             const videoArea = document.getElementById('videoArea');
-            videoArea.innerHTML = `<div class="notice">Gagal memutar: ${error.message}</div>`;
+            videoArea.innerHTML = `<div class="notice"><i class="fas fa-exclamation-triangle"></i> Gagal memutar: ${error.message}<br>Coba episode lain atau refresh.</div>`;
         }
     }
     
     function loadVideo(url) {
         const video = document.getElementById('animeVideo');
         if (Hls.isSupported() && url.includes('.m3u8')) {
+            if (video.hls) video.hls.destroy();
             const hls = new Hls();
             hls.loadSource(url);
             hls.attachMedia(video);
+            video.hls = hls;
         } else {
             video.src = url;
         }
-        video.play().catch(e => console.log('Auto-play prevented:', e));
-    }
-
-    function renderPagination(hasNext, nextPage, current) {
-        const div = document.getElementById('pagination');
-        if (!hasNext && current === 1 && !currentSearchQuery) {
-            div.innerHTML = '';
-            return;
-        }
-
-        div.innerHTML = `
-            <button class="cat-btn" id="prevPage" ${current === 1 ? 'disabled' : ''}>◀ Sebelumnya</button>
-            <span style="padding: 0 12px">Halaman ${current}</span>
-            <button class="cat-btn" id="nextPage" ${!hasNext ? 'disabled' : ''}>Berikutnya ▶</button>
-        `;
-
-        document.getElementById('prevPage')?.addEventListener('click', () => {
-            if (current > 1) {
-                currentPage = current - 1;
-                loadAnimes(currentPage);
-            }
-        });
-
-        document.getElementById('nextPage')?.addEventListener('click', () => {
-            if (hasNext) {
-                currentPage = current + 1;
-                loadAnimes(currentPage);
-            }
-        });
+        video.play().catch(e => console.log('Auto-play blocked:', e));
     }
 
     function escapeHtml(str) {
@@ -600,44 +633,34 @@
     }
 
     // Event Listeners
-    document.querySelectorAll('.cat-btn').forEach(btn => {
-        if (btn.dataset.type) {
-            btn.addEventListener('click', () => {
-                document.querySelectorAll('.cat-btn').forEach(b => b.classList.remove('active'));
-                btn.classList.add('active');
-                currentType = btn.dataset.type;
-                currentSearchQuery = '';
-                currentPage = 1;
-                document.getElementById('searchInput').value = '';
-                loadAnimes(1);
-            });
-        }
-    });
-
     document.getElementById('searchBtn').addEventListener('click', () => {
         const query = document.getElementById('searchInput').value.trim();
         if (query) {
             currentSearchQuery = query;
             currentPage = 1;
-            loadAnimes(1);
-        } else {
-            currentSearchQuery = '';
-            loadAnimes(1);
+            loadAnimes();
         }
     });
-
+    
     document.getElementById('searchInput').addEventListener('keypress', (e) => {
         if (e.key === 'Enter') document.getElementById('searchBtn').click();
     });
-
+    
+    document.getElementById('refreshBtn').addEventListener('click', () => {
+        currentSearchQuery = '';
+        document.getElementById('searchInput').value = '';
+        currentPage = 1;
+        loadAnimes();
+    });
+    
     document.getElementById('backHomeBtn').addEventListener('click', () => {
         document.getElementById('detailView').style.display = 'none';
         document.getElementById('homeView').style.display = 'block';
-        loadAnimes(currentPage);
+        loadAnimes();
     });
-
-    // Initial load
-    loadAnimes(1);
+    
+    // Load initial
+    loadAnimes();
 </script>
 </body>
 </html>
